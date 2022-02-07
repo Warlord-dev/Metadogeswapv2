@@ -475,7 +475,7 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     bool public antiBotEnabled;    
     
     uint256 public _taxFee       = 3; 
-    uint256 public _liquidityFee = 7; 
+    uint256 public _liquidityFee = 9; 
     uint256 public _percentageOfLiquidityForMarketing = 57; 
     
     uint256 sellFeeX = 150;
