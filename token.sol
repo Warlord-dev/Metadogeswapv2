@@ -980,6 +980,4 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
         emit Transfer(sender, recipient, tTransferAmount);
     }
     
-    
-
 }
