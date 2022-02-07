@@ -446,8 +446,6 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
 contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     using SafeMath for uint256;
 
-    
-
     mapping (address => bool) isTxLimitExempt;
     mapping (address => uint256) private _rOwned;
     mapping (address => uint256) private _tOwned;
@@ -455,13 +453,10 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     mapping (address => bool) private _isExcluded;
     mapping (address => mapping (address => uint256)) private _allowances;
     mapping (address => bool) public _isExcludedFromAutoLiquidity;
-
-    
     
     address[] private _excluded;
     address public _marketingWallet;
-    
-   
+
     uint256 private constant MAX = ~uint256(0);
     uint256 private _tTotal = 1000000000 * 10**12 * 10**9;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
@@ -474,12 +469,11 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     IPinkAntiBot public pinkAntiBot;
     bool public antiBotEnabled;    
     
-    uint256 public _taxFee       = 3; 
-    uint256 public _liquidityFee = 7; 
+    uint256 public _taxFee       = 4; 
+    uint256 public _liquidityFee = 9; 
     uint256 public _percentageOfLiquidityForMarketing = 57; 
     
-    uint256 sellFeeX = 150;
-    
+    uint256 public sellFeeX = 150;
     uint256 public  _maxTxAmount     = 3000000 * 10**12 * 10**9;
     uint256 private _minTokenBalance = 200000 * 10**6 * 10**9;
     
@@ -499,8 +493,8 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     );
     
     event MarketingFeeSent(address to, uint256 bnbSent);
-    
-    
+    event SetSellFeeX(uint256 sellFeeX);
+
     modifier lockTheSwap {
         _inSwapAndLiquify = true;
         _;
@@ -511,7 +505,6 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
         _marketingWallet = marketingWallet;
 
         _rOwned[cOwner] = _rTotal;
-        
         
         // uniswap
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
@@ -809,7 +802,6 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
             // contractTokenBalance = _minTokenBalance;
             swapAndLiquify(contractTokenBalance);
         }
-
         
         bool takeFee = true;
         if (_isExcludedFromFee[from] || _isExcludedFromFee[to]) {
@@ -851,6 +843,7 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
         
         emit SwapAndLiquify(half, bnbForLiquidity, otherHalf);
     }
+
     function swapTokensForBnb(uint256 tokenAmount) private {
         // generate the uniswap pair path of token -> weth
         address[] memory path = new address[](2);
@@ -868,6 +861,7 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
             block.timestamp
         );
     }
+
     function addLiquidity(uint256 tokenAmount, uint256 bnbAmount) private {
         // approve token transfer to cover all possible scenarios
         _approve(address(this), address(_uniswapV2Router), tokenAmount);
@@ -927,6 +921,7 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     function setsellFeeX(uint256 _sellFeeX) external onlyOwner() {
         require(_sellFeeX >=100, "sellFeeX Must be above 100");
         sellFeeX = _sellFeeX;
+        emit SetSellFeeX(_sellFeeX);
     }
 
     function _transferStandard(address sender, address recipient, uint256 tAmount) private {
