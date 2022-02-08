@@ -9,7 +9,7 @@
 
 // SPDX-License-Identifier: Unlicensed
 
-pragma solidity ^0.8.4;
+pragma solidity 0.8.9;
 
 
 abstract contract Context {
@@ -458,13 +458,13 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     address public _marketingWallet;
 
     uint256 private constant MAX = ~uint256(0);
-    uint256 private _tTotal = 1000000000 * 10**12 * 10**9;
+    uint256 private constant _tTotal = 1000000000 * 10**12 * 10**9;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
-    string private _name     = "MetaDogeSwapv2";
-    string private _symbol   = "MDSv2";
-    uint8 private  _decimals = 9;
+    string private constant _name     = "MetaDogeSwapv2";
+    string private constant _symbol   = "MDSv2";
+    uint8 private constant _decimals = 9;
     
     IPinkAntiBot public pinkAntiBot;
     bool public antiBotEnabled;    
@@ -494,6 +494,18 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     
     event MarketingFeeSent(address to, uint256 bnbSent);
     event SetSellFeeX(uint256 sellFeeX);
+    event SetUsingAntiBot(bool enabled);
+    event ExcludeFromReward(address account);
+    event IncludeInReward(address account);
+    event SetmarketingWallet(address marketingWallet);
+    event SetExcludedFromFee(address account, bool e);
+    event SetTaxFeePercent(uint256 taxFee);
+    event SetLiquidityFeePercent(uint256 liquidityFee);
+    event SetPercentageOfLiquidityFormarketing(uint256 marketingFee);
+    event SetMaxTxAmount(uint256 maxTxAmount);
+    event SetExcludedFromAutoLiquidity(address a, bool b);
+    event SetUniswapPair(address p);
+    event SetUniswapRouter(address r);
 
     modifier lockTheSwap {
         _inSwapAndLiquify = true;
@@ -531,21 +543,22 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     
     function setUsingAntiBot(bool enabled_) external onlyOwner {
         antiBotEnabled = enabled_;
+        emit SetUsingAntiBot(antiBotEnabled);
     }
 
-    function name() public view returns (string memory) {
+    function name() external pure returns (string memory) {
         return _name;
     }
 
-    function symbol() public view returns (string memory) {
+    function symbol() external pure returns (string memory) {
         return _symbol;
     }
 
-    function decimals() public view returns (uint8) {
+    function decimals() external pure returns (uint8) {
         return _decimals;
     }
 
-    function totalSupply() public view override returns (uint256) {
+    function totalSupply() external pure override returns (uint256) {
         return _tTotal;
     }
 
@@ -559,40 +572,40 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
         return true;
     }
 
-    function allowance(address owner, address spender) public view override returns (uint256) {
+    function allowance(address owner, address spender) external view override returns (uint256) {
         return _allowances[owner][spender];
     }
 
-    function approve(address spender, uint256 amount) public override returns (bool) {
+    function approve(address spender, uint256 amount) external override returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
 
-    function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
+    function transferFrom(address sender, address recipient, uint256 amount) external override returns (bool) {
         _transfer(sender, recipient, amount);
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "BEP20: transfer amount exceeds allowance"));
         return true;
     }
 
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue) external virtual returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
         return true;
     }
 
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue) external virtual returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "BEP20: decreased allowance below zero"));
         return true;
     }
 
-    function isExcludedFromReward(address account) public view returns (bool) {
+    function isExcludedFromReward(address account) external view returns (bool) {
         return _isExcluded[account];
     }
 
-    function totalFees() public view returns (uint256) {
+    function totalFees() external view returns (uint256) {
         return _tFeeTotal;
     }
 
-    function deliver(uint256 tAmount) public {
+    function deliver(uint256 tAmount) external {
         address sender = _msgSender();
         require(!_isExcluded[sender], "Excluded addresses cannot call this function");
 
@@ -605,7 +618,7 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
         _tFeeTotal      = _tFeeTotal.add(tAmount);
     }
 
-    function reflectionFromToken(uint256 tAmount, bool deductTransferFee) public view returns(uint256) {
+    function reflectionFromToken(uint256 tAmount, bool deductTransferFee) external view returns(uint256) {
         require(tAmount <= _tTotal, "Amount must be less than supply");
         (, uint256 tFee, uint256 tLiquidity) = _getTValues(tAmount);
         uint256 currentRate = _getRate();
@@ -627,7 +640,7 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
         return rAmount.div(currentRate);
     }
 
-    function excludeFromReward(address account) public onlyOwner {
+    function excludeFromReward(address account) external onlyOwner {
         require(!_isExcluded[account], "Account is already excluded");
 
         if (_rOwned[account] > 0) {
@@ -635,10 +648,11 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
         }
         _isExcluded[account] = true;
         _excluded.push(account);
+        emit ExcludeFromReward(account);
     }
 
     function includeInReward(address account) external onlyOwner {
-        require(_isExcluded[account], "Account is already excluded");
+        require(_isExcluded[account], "Account is already not excluded");
 
         for (uint256 i = 0; i < _excluded.length; i++) {
             if (_excluded[i] == account) {
@@ -649,30 +663,38 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
                 break;
             }
         }
+        emit IncludeInReward(account);
     }
 
     function setmarketingWallet(address marketingWallet) external onlyOwner {
+        require(marketingWallet != address(0), "Marketing Wallet can't be a zero address");
         _marketingWallet = marketingWallet;
+        emit SetmarketingWallet(marketingWallet);
     }
 
     function setExcludedFromFee(address account, bool e) external onlyOwner {
         _isExcludedFromFee[account] = e;
+        emit SetExcludedFromFee(account, e);
     }
     
     function setTaxFeePercent(uint256 taxFee) external onlyOwner {
         _taxFee = taxFee;
+        emit SetTaxFeePercent(taxFee);
     }
 
     function setLiquidityFeePercent(uint256 liquidityFee) external onlyOwner {
         _liquidityFee = liquidityFee;
+        emit SetLiquidityFeePercent(liquidityFee);
     }
 
     function setPercentageOfLiquidityFormarketing(uint256 marketingFee) external onlyOwner {
         _percentageOfLiquidityForMarketing = marketingFee;
+        emit SetPercentageOfLiquidityFormarketing(marketingFee);
     }
    
     function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner {
         _maxTxAmount = maxTxAmount;
+        emit SetMaxTxAmount(maxTxAmount);
     }
 
     function setIsTxLimitExempt(address holder, bool exempt) external onlyOwner {
@@ -680,9 +702,15 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
         emit TxLimitExemptUpdated(holder, exempt);
     }    
 
-    function setSwapAndLiquifyEnabled(bool e) public onlyOwner {
+    function setSwapAndLiquifyEnabled(bool e) external onlyOwner {
         _swapAndLiquifyEnabled = e;
         emit SwapAndLiquifyEnabledUpdated(e);
+    }
+
+    function setSellFeeX(uint256 _sellFeeX) external onlyOwner() {
+        require(_sellFeeX >=100, "sellFeeX Must be above 100");
+        sellFeeX = _sellFeeX;
+        emit SetSellFeeX(_sellFeeX);
     }
     
     receive() external payable {}
@@ -690,14 +718,17 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     function setUniswapRouter(address r) external onlyOwner {
         IUniswapV2Router02 uniswapV2Router = IUniswapV2Router02(r);
         _uniswapV2Router = uniswapV2Router;
+        emit SetUniswapRouter(r);
     }
 
     function setUniswapPair(address p) external onlyOwner {
         _uniswapV2Pair = p;
+        emit SetUniswapPair(p);
     }
 
     function setExcludedFromAutoLiquidity(address a, bool b) external onlyOwner {
         _isExcludedFromAutoLiquidity[a] = b;
+        emit SetExcludedFromAutoLiquidity(a, b);
     }
 
     function _reflectFee(uint256 rFee, uint256 tFee) private {
@@ -753,7 +784,7 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
         return amount.mul(fee).div(100);
     }
     
-    function isExcludedFromFee(address account) public view returns(bool) {
+    function isExcludedFromFee(address account) external view returns(bool) {
         return _isExcludedFromFee[account];
     }
 
@@ -831,7 +862,7 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
         uint256 newBalance = address(this).balance.sub(initialBalance);
 
         // take marketing fee
-        uint256 marketingFee          = newBalance.mul(_percentageOfLiquidityForMarketing).div(100);
+        uint256 marketingFee    = newBalance.mul(_percentageOfLiquidityForMarketing).div(100);
         uint256 bnbForLiquidity = newBalance.sub(marketingFee);
         if (marketingFee > 0) {
             payable(_marketingWallet).transfer(marketingFee);
@@ -916,12 +947,6 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
             _taxFee       = previousTaxFee;
             _liquidityFee = previousLiquidityFee;
         }
-    }
-
-    function setsellFeeX(uint256 _sellFeeX) external onlyOwner() {
-        require(_sellFeeX >=100, "sellFeeX Must be above 100");
-        sellFeeX = _sellFeeX;
-        emit SetSellFeeX(_sellFeeX);
     }
 
     function _transferStandard(address sender, address recipient, uint256 tAmount) private {
