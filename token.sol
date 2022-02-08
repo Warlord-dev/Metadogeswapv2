@@ -23,11 +23,6 @@ abstract contract Context {
     }
 }
 
-pragma solidity >=0.5.0;
-
-
-
-
 interface IBEP20 {
     function totalSupply() external view returns (uint256);
     function balanceOf(address account) external view returns (uint256);
@@ -439,9 +434,6 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
         uint deadline
     ) external;
 }
-
-
-
 
 contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     using SafeMath for uint256;
