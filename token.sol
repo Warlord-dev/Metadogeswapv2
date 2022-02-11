@@ -450,7 +450,7 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     address public _marketingWallet;
 
     uint256 private constant MAX = ~uint256(0);
-    uint256 private constant _tTotal = 1000000000 * 10**12 * 10**9;
+    uint256 private constant _tTotal = 1000000 * 10**6 * 10**9;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
@@ -466,8 +466,8 @@ contract MetaDogeSwapv2 is Context, IBEP20, Ownable {
     uint256 public _percentageOfLiquidityForMarketing = 57; 
     
     uint256 public sellFeeX = 150;
-    uint256 public  _maxTxAmount     = 3000000 * 10**12 * 10**9;
-    uint256 private _minTokenBalance = 200000 * 10**6 * 10**9;
+    uint256 public  _maxTxAmount     = 3000 * 10**6 * 10**9;
+    uint256 private _minTokenBalance = 200 * 10**6 * 10**9; 
     
     // auto liquidity
     bool public _swapAndLiquifyEnabled = true;
