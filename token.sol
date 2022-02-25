@@ -739,7 +739,7 @@ contract MetaDogeSwapV2 is Context, IBEP20, Ownable, ReentrancyGuard {
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
         // split contract balance into halves
-        uint256 half = contractTokenBalance * ( 1 + _percentageOfLiquidityForMarketing / 100) / 2;
+        uint256 half = contractTokenBalance * ( 100 + _percentageOfLiquidityForMarketing) / 200;
         uint256 otherHalf = contractTokenBalance - half;
 
         /*
