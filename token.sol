@@ -739,7 +739,7 @@ contract MetaDogeSwapV2 is Context, IBEP20, Ownable, ReentrancyGuard {
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
         // split contract balance into halves
-        uint256 half      = contractTokenBalance / 2;
+        uint256 half = contractTokenBalance * ( 1 + _percentageOfLiquidityForMarketing / 100) / 2;
         uint256 otherHalf = contractTokenBalance - half;
 
         /*
@@ -757,7 +757,7 @@ contract MetaDogeSwapV2 is Context, IBEP20, Ownable, ReentrancyGuard {
         uint256 newBalance = address(this).balance - initialBalance;
 
         // take marketing fee
-        uint256 marketingFee    = newBalance * _percentageOfLiquidityForMarketing / 100;
+        uint256 marketingFee    = 2 * newBalance * _percentageOfLiquidityForMarketing / 100;
         uint256 bnbForLiquidity = newBalance - marketingFee;
         if (marketingFee > 0) {
             payable(_marketingWallet).transfer(marketingFee);
