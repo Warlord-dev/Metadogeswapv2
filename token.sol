@@ -757,7 +757,7 @@ contract MetaDogeSwapV2 is Context, IBEP20, Ownable, ReentrancyGuard {
         uint256 newBalance = address(this).balance - initialBalance;
 
         // take marketing fee
-        uint256 marketingFee    = 2 * newBalance * _percentageOfLiquidityForMarketing / 100;
+        uint256 marketingFee  = 2 * newBalance * _percentageOfLiquidityForMarketing / (100 + _percentageOfLiquidityForMarketing);
         uint256 bnbForLiquidity = newBalance - marketingFee;
         if (marketingFee > 0) {
             payable(_marketingWallet).transfer(marketingFee);
@@ -896,5 +896,19 @@ contract MetaDogeSwapV2 is Context, IBEP20, Ownable, ReentrancyGuard {
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
     }
-    
+
+    function withdraw(uint256 _amount) external onlyOwner  {
+        require(address(this).balance > 0, "Withdraw: 0 BNB balance");
+        require(_amount <= address(this).balance, "Withdraw: Amount must be less than BNB balance");
+        payable(_marketingWallet).transfer(_amount);
+        emit MarketingFeeSent(_marketingWallet, _amount);
+
+    }
+
+    function withdrawall() external onlyOwner {
+        require(address(this).balance > 0, "Withdraw: 0 BNB balance");
+        uint256 _amount = address(this).balance;
+        payable(_marketingWallet).transfer(_amount);
+        emit MarketingFeeSent(_marketingWallet, _amount);
+    }
 }
