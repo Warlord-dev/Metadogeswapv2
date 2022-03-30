@@ -566,6 +566,7 @@ contract MetaDogeSwapV2 is Context, IBEP20, Ownable, ReentrancyGuard {
     }
     
     function setTaxFeePercent(uint256 taxFee) external onlyOwner {
+        require(taxFee <= 50, "TaxFee can't be over 50%");
         _taxFee = taxFee;
         emit SetTaxFeePercent(taxFee);
     }
