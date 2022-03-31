@@ -1,16 +1,16 @@
-/* Metadogeswap is using the same fundamentals of Buyback as everRise to increase the investor's value for holding
+/* Metadogeswap V2 is using super smart contract that has zero bugs and also using the fundamentals of Buyback to increase the investor's value for holding
     
   Main features include
     
-  1) 4% tax is collected and distributed to holders for HODLing
-  2) 4% buyback is used to buyback the tokens whenever the price goes down to -40% along with promo 
-  3) 5% tax is collected and is sent for marketing
+  1) % tax is collected and distributed to holders for HODLing
+  2) % buyback is used to buyback the tokens whenever the price goes down 
+  3) % tax is collected and is sent for marketing
+  4) Anti-bot to reduce the risk and monopulation of bots.
+  5) The state variables _taxFee , _liquidityFee , _percentageOfLiquidityForMarketing and _maxTxAmount has now set to limits as recommended by Certik. 
   */
-
 // SPDX-License-Identifier: Unlicensed
 
 pragma solidity 0.8.9;
-
 
 abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
@@ -344,9 +344,9 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-contract MetaDogeSwapV2 is Context, IBEP20, Ownable, ReentrancyGuard {
+contract MetaDogeSwap is Context, IBEP20, Ownable, ReentrancyGuard {
 
-    mapping (address => bool) isTxLimitExempt;
+    mapping (address => bool) public isTxLimitExempt;
     mapping (address => uint256) private _rOwned;
     mapping (address => uint256) private _tOwned;
     mapping (address => bool) private _isExcludedFromFee;
@@ -362,8 +362,8 @@ contract MetaDogeSwapV2 is Context, IBEP20, Ownable, ReentrancyGuard {
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
-    string private constant _name     = "MetaDogeSwapV2";
-    string private constant _symbol   = "MDSV2";
+    string private constant _name     = "MetaDogeSwap";
+    string private constant _symbol   = "MDS";
     uint8 private constant _decimals = 9;
     
     IPinkAntiBot public pinkAntiBot;
@@ -566,7 +566,7 @@ contract MetaDogeSwapV2 is Context, IBEP20, Ownable, ReentrancyGuard {
     }
     
     function setTaxFeePercent(uint256 taxFee) external onlyOwner {
-        require(taxFee <= 50, "TaxFee can't be over 50%");
+        require(taxFee <= 15, "TaxFee can't be over 15%");
         _taxFee = taxFee;
         emit SetTaxFeePercent(taxFee);
     }
@@ -584,6 +584,7 @@ contract MetaDogeSwapV2 is Context, IBEP20, Ownable, ReentrancyGuard {
     }
    
     function setMaxTxAmount(uint256 maxTxAmount) external onlyOwner {
+        require(maxTxAmount <= _tTotal / 50, "MaxTxAmount can't be over 2% of TotalSupply");
         _maxTxAmount = maxTxAmount;
         emit SetMaxTxAmount(maxTxAmount);
     }
@@ -702,7 +703,7 @@ contract MetaDogeSwapV2 is Context, IBEP20, Ownable, ReentrancyGuard {
             // Check for malicious transfers
             pinkAntiBot.onPreTransferCheck(from, to, amount);
         }
-        if (from != owner() && to != owner()) {
+        if (!isTxLimitExempt[from] && !isTxLimitExempt[to]) {
             require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
         }
         /*
